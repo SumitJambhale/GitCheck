@@ -336,6 +336,29 @@ def set_gemini(api_key: Optional[str] = None):
     console.print("[dim]GitCheck will now automatically use Google Gemini 1.5 Flash for all verification runs.[/dim]")
 
 @cli.command()
+@click.option("--url", prompt="[cyan]Enter Supabase Project URL (e.g. https://xyz.supabase.co)[/cyan]")
+@click.option("--key", prompt="[cyan]Enter Supabase anon/public key[/cyan]", hide_input=True)
+def set_supabase(url: str, key: str):
+    """Save Supabase credentials to ~/.gitcheckrc for all repositories."""
+    if not url.strip() or not key.strip():
+        console.print("[red]Error: URL and key are required.[/red]")
+        return
+    home_rc = Path.home() / ".gitcheckrc"
+    data = {}
+    if home_rc.exists():
+        try:
+            with open(home_rc, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        except Exception:
+            pass
+    data["SUPABASE_URL"] = url.strip().rstrip("/")
+    data["SUPABASE_ANON_KEY"] = key.strip()
+    with open(home_rc, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2)
+    console.print(f"[bold green]✔[/bold green] Supabase credentials saved to [cyan]{home_rc}[/cyan]!")
+    console.print("[dim]GitCheck CLI will now sync all commit verification reviews to your Supabase PostgreSQL DB.[/dim]")
+
+@cli.command()
 def config_info():
     """View active GitCheck configuration and provider status."""
     render_banner()
