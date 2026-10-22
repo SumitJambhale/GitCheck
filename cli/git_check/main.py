@@ -35,7 +35,8 @@ def cli(ctx):
 @cli.command()
 @click.option("--hook", is_flag=True, help="Invoked automatically by git pre-commit hook.")
 @click.option("--ticket", "-t", default=None, help="Explicit Jira/Issue ticket number.")
-def run(hook: bool, ticket: Optional[str] = None):
+@click.option("--last-commit", is_flag=True, help="Verify the last commit made on HEAD instead of staged changes.")
+def run(hook: bool, ticket: Optional[str] = None, last_commit: bool = False):
     """Run interactive comprehension verification on staged git changes."""
     render_banner()
 
@@ -44,10 +45,10 @@ def run(hook: bool, ticket: Optional[str] = None):
         console.print("[bold red]Error:[/bold red] Not inside a Git repository.")
         sys.exit(1)
 
-    diff = git.get_staged_diff()
+    diff = git.get_staged_diff(allow_last_commit=last_commit)
     if not diff or not diff.strip():
-        console.print("[yellow]Notice:[/yellow] No staged changes found.")
-        console.print("[dim]Stage your changes with `git add <files>` before running git-check.[/dim]")
+        console.print("[yellow]Notice:[/yellow] No changes found to verify.")
+        console.print("[dim]Stage your changes with `git add <files>` before running git-check.\n(Or use `git-check run --last-commit` to re-verify the previous commit).[/dim]")
         sys.exit(0 if hook else 1)
 
     branch = git.get_branch_name()

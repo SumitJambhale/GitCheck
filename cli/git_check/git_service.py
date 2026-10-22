@@ -40,18 +40,21 @@ class GitService:
         code, out, _ = self._run(["git", "rev-parse", "--short", "HEAD"])
         return out if code == 0 else "staged"
 
-    def get_staged_diff(self) -> str:
-        # Check staged diff
+    def get_staged_diff(self, allow_last_commit: bool = False) -> str:
+        # 1. Check staged diff (git add)
         code, out, _ = self._run(["git", "diff", "--cached", "--no-color"])
-        if code == 0 and out:
+        if code == 0 and out.strip():
             return out
-        # If no staged changes, check working tree diff
-        code, out, _ = self._run(["git", "diff", "--no-color", "HEAD"])
-        if code == 0 and out:
+        # 2. Check unstaged working tree diff
+        code, out, _ = self._run(["git", "diff", "--no-color"])
+        if code == 0 and out.strip():
             return out
-        # Fallback to last commit diff if both empty
-        code, out, _ = self._run(["git", "show", "--no-color", "--stat", "-p", "HEAD"])
-        return out if code == 0 else ""
+        # 3. Only inspect last commit if explicitly requested
+        if allow_last_commit:
+            code, out, _ = self._run(["git", "show", "--no-color", "--stat", "-p", "HEAD"])
+            if code == 0 and out.strip():
+                return out
+        return ""
 
     def get_diff_stats(self) -> Dict[str, Any]:
         code, out, _ = self._run(["git", "diff", "--cached", "--stat"])
