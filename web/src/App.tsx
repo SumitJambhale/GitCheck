@@ -5,8 +5,8 @@ import { PreviousContextTimeline } from './components/PreviousContextTimeline';
 import { TicketList } from './components/TicketList';
 import { CliInstallModal } from './components/CliInstallModal';
 import { CommitReview } from './types';
-import { fetchReviews } from './lib/supabase';
-import { RefreshCw, ShieldAlert, Sparkles, AlertCircle } from 'lucide-react';
+import { fetchReviewsDetailed } from './lib/supabase';
+import { RefreshCw, ShieldAlert, Sparkles, AlertCircle, AlertTriangle } from 'lucide-react';
 
 export const App: React.FC = () => {
   const [reviews, setReviews] = useState<CommitReview[]>([]);
@@ -15,13 +15,17 @@ export const App: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(true);
   const [showCliModal, setShowCliModal] = useState<boolean>(false);
+  const [apiError, setApiError] = useState<string | null>(null);
+  const [activeSupabaseUrl, setActiveSupabaseUrl] = useState<string>('');
 
   const loadData = async () => {
     setLoading(true);
-    const data = await fetchReviews();
-    setReviews(data);
-    if (data.length > 0) {
-      setSelectedTicket((prev) => (prev && data.some(r => r.ticket_number === prev) ? prev : data[0].ticket_number));
+    const res = await fetchReviewsDetailed();
+    setReviews(res.reviews);
+    setApiError(res.error);
+    setActiveSupabaseUrl(res.supabaseUrl);
+    if (res.reviews.length > 0) {
+      setSelectedTicket((prev) => (prev && res.reviews.some(r => r.ticket_number === prev) ? prev : res.reviews[0].ticket_number));
     }
     setLoading(false);
   };
@@ -73,6 +77,22 @@ export const App: React.FC = () => {
           </button>
         </div>
 
+        {/* Prominent error alert if Supabase returned an error */}
+        {apiError && (
+          <div className="mb-6 p-5 rounded-2xl bg-rose-950/40 border border-rose-800 text-rose-200 text-xs">
+            <div className="font-semibold text-sm flex items-center space-x-2 text-rose-400 mb-1.5">
+              <AlertTriangle className="h-4 w-4 shrink-0" />
+              <span>Supabase Query Notice</span>
+            </div>
+            <p className="leading-relaxed">
+              Database responded with error: <code className="bg-rose-900/40 px-1.5 py-0.5 rounded text-white">{apiError}</code>
+            </p>
+            <p className="mt-2 text-rose-300/80">
+              If this mentions permission denied or RLS, execute <code className="text-white">supabase/schema.sql</code> in your Supabase SQL Editor.
+            </p>
+          </div>
+        )}
+
         {loading ? (
           <div className="flex items-center justify-center h-64">
             <RefreshCw className="h-8 w-8 text-blue-500 animate-spin" />
@@ -80,9 +100,12 @@ export const App: React.FC = () => {
         ) : reviews.length === 0 ? (
           <div className="p-12 text-center bg-slate-900 rounded-2xl border border-slate-800">
             <AlertCircle className="h-10 w-10 text-amber-400 mx-auto mb-3" />
-            <h3 className="text-base font-semibold text-white">No Commit Reviews Found</h3>
-            <p className="text-xs text-slate-400 mt-1 mb-4">
-              Run <code className="text-blue-400 font-mono">git-check</code> locally to evaluate your first commit.
+            <h3 className="text-base font-semibold text-white">No Commit Reviews Found in Database</h3>
+            <p className="text-xs text-slate-400 mt-1 mb-2">
+              Connected to <code className="text-blue-400 font-mono">{activeSupabaseUrl || 'Supabase'}</code>. The table <code className="text-emerald-400 font-mono">git_check_reviews</code> returned 0 rows.
+            </p>
+            <p className="text-xs text-slate-500 mb-4">
+              Run <code className="text-blue-400 font-mono">git-check run</code> locally to commit your first verified review!
             </p>
             <button
               onClick={() => setShowCliModal(true)}

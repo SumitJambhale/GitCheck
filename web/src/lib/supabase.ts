@@ -7,7 +7,12 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.en
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 
 export const supabase = isSupabaseConfigured
-  ? createClient(supabaseUrl, supabaseAnonKey)
+  ? createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+      }
+    })
   : null;
 
 // Realistic sample history to enable immediate preview without initial Supabase setup
@@ -85,7 +90,18 @@ export const SAMPLE_REVIEWS: CommitReview[] = [
   }
 ];
 
+export interface FetchReviewsResponse {
+  reviews: CommitReview[];
+  error: string | null;
+  supabaseUrl: string;
+}
+
 export async function fetchReviews(): Promise<CommitReview[]> {
+  const res = await fetchReviewsDetailed();
+  return res.reviews;
+}
+
+export async function fetchReviewsDetailed(): Promise<FetchReviewsResponse> {
   if (supabase) {
     try {
       const { data, error } = await supabase
@@ -94,18 +110,33 @@ export async function fetchReviews(): Promise<CommitReview[]> {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Supabase query error:', error.message);
-        return [];
+        console.error('Supabase query error:', error);
+        return {
+          reviews: [],
+          error: `${error.message} (${error.code || 'check Supabase RLS policies'})`,
+          supabaseUrl
+        };
       }
 
-      // Return real data from Supabase (or empty array if 0 records)
-      return (data || []) as CommitReview[];
+      return {
+        reviews: (data || []) as CommitReview[],
+        error: null,
+        supabaseUrl
+      };
     } catch (err: any) {
       console.warn('Could not query Supabase:', err);
-      return [];
+      return {
+        reviews: [],
+        error: err?.message || 'Network exception connecting to Supabase',
+        supabaseUrl
+      };
     }
   }
 
   // Only return sample demo data when Supabase is NOT configured at all
-  return SAMPLE_REVIEWS;
+  return {
+    reviews: SAMPLE_REVIEWS,
+    error: null,
+    supabaseUrl: ''
+  };
 }
