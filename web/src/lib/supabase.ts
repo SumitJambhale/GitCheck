@@ -1,8 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 import { CommitReview } from '../types';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || import.meta.env.SUPABASE_URL || '';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.SUPABASE_ANON_KEY || '';
 
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 
@@ -93,7 +93,9 @@ export async function fetchReviews(): Promise<CommitReview[]> {
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (!error && data && data.length > 0) {
+      if (error) {
+        console.error('Supabase query error:', error.message, error.details);
+      } else if (data) {
         return data as CommitReview[];
       }
     } catch (err) {
