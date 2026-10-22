@@ -94,13 +94,18 @@ export async function fetchReviews(): Promise<CommitReview[]> {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Supabase query error:', error.message, error.details);
-      } else if (data) {
-        return data as CommitReview[];
+        console.error('Supabase query error:', error.message);
+        return [];
       }
-    } catch (err) {
-      console.warn('Could not query Supabase, using local sample reviews:', err);
+
+      // Return real data from Supabase (or empty array if 0 records)
+      return (data || []) as CommitReview[];
+    } catch (err: any) {
+      console.warn('Could not query Supabase:', err);
+      return [];
     }
   }
+
+  // Only return sample demo data when Supabase is NOT configured at all
   return SAMPLE_REVIEWS;
 }

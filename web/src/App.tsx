@@ -10,7 +10,7 @@ import { RefreshCw, ShieldAlert, Sparkles, AlertCircle } from 'lucide-react';
 
 export const App: React.FC = () => {
   const [reviews, setReviews] = useState<CommitReview[]>([]);
-  const [selectedTicket, setSelectedTicket] = useState<string>('PROJ-402');
+  const [selectedTicket, setSelectedTicket] = useState<string>('');
   const [activeReviewId, setActiveReviewId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(true);
@@ -20,8 +20,8 @@ export const App: React.FC = () => {
     setLoading(true);
     const data = await fetchReviews();
     setReviews(data);
-    if (data.length > 0 && !selectedTicket) {
-      setSelectedTicket(data[0].ticket_number);
+    if (data.length > 0) {
+      setSelectedTicket((prev) => (prev && data.some(r => r.ticket_number === prev) ? prev : data[0].ticket_number));
     }
     setLoading(false);
   };
