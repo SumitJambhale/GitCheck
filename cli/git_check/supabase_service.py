@@ -14,15 +14,16 @@ class SupabaseService:
     def is_configured(self) -> bool:
         return bool(self.url and self.key)
 
-    def save_review(self, review_data: Dict[str, Any]) -> bool:
+    def save_review(self, review_data: Dict[str, Any]) -> tuple[bool, str]:
         """
         Saves commit review findings and summary to Supabase or local fallback store.
+        Returns (success, message).
         """
         # Always store locally as fallback / instant cache
         self._save_to_local_file(review_data)
 
         if not self.is_configured():
-            return False
+            return False, "Supabase credentials not configured in CLI"
 
         endpoint = f"{self.url}/rest/v1/git_check_reviews"
         headers = {
@@ -48,9 +49,36 @@ class SupabaseService:
 
         try:
             res = requests.post(endpoint, json=payload, headers=headers, timeout=10)
-            return res.status_code in (200, 201)
-        except Exception:
-            return False
+            if res.status_code in (200, 201):
+                return True, "Successfully synced"
+            else:
+                err_text = res.text[:200]
+                return False, f"HTTP {res.status_code}: {err_text}"
+        except Exception as e:
+            return False, f"Connection error: {str(e)}"
+
+    def sync_local_cache_to_supabase(self) -> tuple[int, int, str]:
+        """
+        Syncs any reviews stored in local .gitcheck_history.json to Supabase.
+        Returns (synced_count, total_count, error_message).
+        """
+        if not self.is_configured():
+            return 0, 0, "Supabase not configured. Run 'git-check set-supabase' first."
+
+        local_records = self._load_local_file()
+        if not local_records:
+            return 0, 0, "No local reviews to sync."
+
+        synced = 0
+        last_error = ""
+        for record in reversed(local_records):
+            success, msg = self.save_review(record)
+            if success:
+                synced += 1
+            else:
+                last_error = msg
+
+        return synced, len(local_records), last_error
 
     def fetch_ticket_history(self, ticket_number: str) -> List[Dict[str, Any]]:
         """

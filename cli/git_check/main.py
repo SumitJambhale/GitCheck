@@ -248,8 +248,13 @@ def run(hook: bool, ticket: Optional[str] = None, last_commit: bool = False):
     commit_trailer = NoteGenerator.format_commit_trailer(detected_ticket, summary_50_100, agreed)
 
     # Save to Supabase (Confidential store of findings and understanding)
-    saved = supabase.save_review(defense_data)
-    db_status = "[green]Synced to Supabase[/green]" if saved else "[dim]Cached locally in .gitcheck_history.json[/dim]"
+    saved, db_msg = supabase.save_review(defense_data)
+    if saved:
+        db_status = f"[bold green]Synced to Supabase[/bold green] [dim]({supabase.url})[/dim]"
+    elif supabase.is_configured():
+        db_status = f"[bold red]Supabase Sync Failed:[/bold red] {db_msg} [dim](Cached locally)[/dim]"
+    else:
+        db_status = "[dim]Cached locally (Run 'git-check set-supabase' to sync to Supabase DB)[/dim]"
 
     console.print(
         Panel(
@@ -358,6 +363,26 @@ def set_supabase(url: str, key: str):
         json.dump(data, f, indent=2)
     console.print(f"[bold green]✔[/bold green] Supabase credentials saved to [cyan]{home_rc}[/cyan]!")
     console.print("[dim]GitCheck CLI will now sync all commit verification reviews to your Supabase PostgreSQL DB.[/dim]")
+
+@cli.command()
+def sync_supabase():
+    """Sync locally cached reviews (.gitcheck_history.json) to Supabase database."""
+    render_banner()
+    supabase = SupabaseService()
+    if not supabase.is_configured():
+        console.print("[bold red]Supabase not configured in CLI.[/bold red]")
+        console.print("Run [cyan]git-check set-supabase[/cyan] first to configure your credentials.")
+        return
+
+    with console.status("[bold green]Syncing local reviews to Supabase..."):
+        synced, total, last_err = supabase.sync_local_cache_to_supabase()
+
+    if synced > 0:
+        console.print(f"[bold green]✔ Successfully synced {synced} of {total} reviews to Supabase ({supabase.url})![/bold green]")
+    elif total == 0:
+        console.print("[yellow]No local reviews found to sync in .gitcheck_history.json.[/yellow]")
+    else:
+        console.print(f"[bold red]✘ Failed to sync reviews to Supabase:[/bold red] {last_err}")
 
 @cli.command()
 def config_info():
