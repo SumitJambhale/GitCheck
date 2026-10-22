@@ -1,6 +1,7 @@
 -- GitCheck: Supabase PostgreSQL Schema
 -- Stores commit comprehension findings, architectural summaries, and previous context.
 -- This schema is designed to support a single-page web dashboard for engineers to review and understand code changes, as well as a CLI tool for submitting reviews.
+-- The schema includes a table for storing reviews, with fields for ticket number, branch name, commit hash, author information, summary, detailed analysis, agreement status, verification results, and tags.
 CREATE TABLE IF NOT EXISTS git_check_reviews (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     ticket_number VARCHAR(100) NOT NULL,
