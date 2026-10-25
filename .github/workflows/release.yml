@@ -7,9 +7,9 @@ on:
   workflow_dispatch:
     inputs:
       tag_name:
-        description: 'Tag name to release (e.g. v0.1.0)'
+        description: 'Tag name to release (e.g. v26.4.0)'
         required: true
-        default: 'v0.1.0'
+        default: 'v26.4.0'
 
 permissions:
   contents: write
@@ -18,7 +18,7 @@ jobs:
   build:
     name: Build (${{ matrix.os }} - ${{ matrix.arch }})
     runs-on: ${{ matrix.os }}
-   strategy:
+    strategy:
       matrix:
         include:
           # macOS Apple Silicon (ARM64)
