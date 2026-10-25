@@ -18,25 +18,27 @@ jobs:
   build:
     name: Build (${{ matrix.os }} - ${{ matrix.arch }})
     runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
+   strategy:
       matrix:
         include:
-          # macOS Apple Silicon (M1/M2/M3/M4)
+          # macOS Apple Silicon (ARM64)
           - os: macos-latest
             arch: arm64
             artifact_name: git-check-darwin-arm64
             binary_src: cli/dist/git-check
-          # macOS Intel (x86_64)
-          - os: macos-13
+          
+          # macOS Intel (x86_64) - Built using cross-compilation on an ARM64 host
+          - os: macos-latest
             arch: amd64
             artifact_name: git-check-darwin-amd64
             binary_src: cli/dist/git-check
+            
           # Linux x86_64
           - os: ubuntu-latest
             arch: amd64
             artifact_name: git-check-linux-amd64
             binary_src: cli/dist/git-check
+            
           # Windows x86_64
           - os: windows-latest
             arch: amd64
