@@ -1,0 +1,125 @@
+name: Build and Release Binaries
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Tag name to release (e.g. v0.1.0)'
+        required: true
+        default: 'v0.1.0'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build (${{ matrix.os }} - ${{ matrix.arch }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # macOS Apple Silicon (M1/M2/M3/M4)
+          - os: macos-latest
+            arch: arm64
+            artifact_name: git-check-darwin-arm64
+            binary_src: cli/dist/git-check
+          # macOS Intel (x86_64)
+          - os: macos-13
+            arch: amd64
+            artifact_name: git-check-darwin-amd64
+            binary_src: cli/dist/git-check
+          # Linux x86_64
+          - os: ubuntu-latest
+            arch: amd64
+            artifact_name: git-check-linux-amd64
+            binary_src: cli/dist/git-check
+          # Windows x86_64
+          - os: windows-latest
+            arch: amd64
+            artifact_name: git-check-windows-amd64.exe
+            binary_src: cli/dist/git-check.exe
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller
+          pip install -r cli/requirements.txt
+          pip install -e ./cli
+
+      - name: Build executable with PyInstaller
+        shell: bash
+        run: |
+          cd cli
+          pyinstaller --onefile \
+            --name git-check \
+            --hidden-import click \
+            --hidden-import rich \
+            --hidden-import pydantic \
+            --hidden-import dotenv \
+            --hidden-import requests \
+            git_check/main.py
+
+      - name: Stage binary with platform name
+        shell: bash
+        run: |
+          mkdir -p bin-artifacts
+          cp ${{ matrix.binary_src }} bin-artifacts/${{ matrix.artifact_name }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: bin-artifacts/${{ matrix.artifact_name }}
+
+  release:
+    name: Create GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-binaries
+          merge-multiple: true
+
+      - name: List downloaded files
+        run: ls -la release-binaries
+
+      - name: Determine Release Tag
+        id: release_tag
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "tag=${{ github.event.inputs.tag_name }}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.release_tag.outputs.tag }}
+          name: GitCheck ${{ steps.release_tag.outputs.tag }}
+          draft: false
+          prerelease: false
+          files: release-binaries/*
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
