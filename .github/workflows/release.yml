@@ -26,8 +26,7 @@ jobs:
             arch: arm64
             artifact_name: git-check-darwin-arm64
             binary_src: cli/dist/git-check
-          
-          # macOS Intel (x86_64) - Built using cross-compilation on an ARM64 host
+          # macOS Intel (x86_64)
           - os: macos-latest
             arch: amd64
             artifact_name: git-check-darwin-amd64
