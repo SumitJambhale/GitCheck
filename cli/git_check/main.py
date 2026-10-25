@@ -8,11 +8,25 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.prompt import Prompt, Confirm
 
-from .config import config
-from .git_service import GitService
-from .llm_service import LLMService
-from .supabase_service import SupabaseService
-from .note_generator import NoteGenerator
+try:
+    from .config import config
+    from .git_service import GitService
+    from .llm_service import LLMService
+    from .supabase_service import SupabaseService
+    from .note_generator import NoteGenerator
+except (ImportError, ValueError):
+    try:
+        from git_check.config import config
+        from git_check.git_service import GitService
+        from git_check.llm_service import LLMService
+        from git_check.supabase_service import SupabaseService
+        from git_check.note_generator import NoteGenerator
+    except (ImportError, ValueError):
+        from config import config
+        from git_service import GitService
+        from llm_service import LLMService
+        from supabase_service import SupabaseService
+        from note_generator import NoteGenerator
 
 console = Console()
 

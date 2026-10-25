@@ -2,11 +2,11 @@
 
 
 a = Analysis(
-    ['git_check/main.py'],
-    pathex=[],
+    ['entrypoint.py'],
+    pathex=['.'],
     binaries=[],
     datas=[],
-    hiddenimports=['click', 'rich', 'pydantic', 'dotenv', 'requests'],
+    hiddenimports=['click', 'rich', 'pydantic', 'dotenv', 'requests', 'git_check'],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],

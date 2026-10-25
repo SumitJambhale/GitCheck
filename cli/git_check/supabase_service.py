@@ -2,7 +2,13 @@ import json
 from pathlib import Path
 from typing import Dict, Any, List, Optional
 import requests
-from .config import config
+try:
+    from .config import config
+except (ImportError, ValueError):
+    try:
+        from git_check.config import config
+    except (ImportError, ValueError):
+        from config import config
 
 LOCAL_STORE_FILE = ".gitcheck_history.json"
 

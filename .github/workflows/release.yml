@@ -67,12 +67,14 @@ jobs:
           cd cli
           pyinstaller --onefile \
             --name git-check \
+            --paths . \
             --hidden-import click \
             --hidden-import rich \
             --hidden-import pydantic \
             --hidden-import dotenv \
             --hidden-import requests \
-            git_check/main.py
+            --hidden-import git_check \
+            entrypoint.py
 
       - name: Stage binary with platform name
         shell: bash

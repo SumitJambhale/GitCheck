@@ -3,8 +3,16 @@ import json
 import re
 import requests
 from typing import List, Dict, Any, Optional
-from .config import config
-from .ast_analyzer import ASTAnalyzer
+try:
+    from .config import config
+    from .ast_analyzer import ASTAnalyzer
+except (ImportError, ValueError):
+    try:
+        from git_check.config import config
+        from git_check.ast_analyzer import ASTAnalyzer
+    except (ImportError, ValueError):
+        from config import config
+        from ast_analyzer import ASTAnalyzer
 
 class LLMService:
     def __init__(self):
