@@ -2,6 +2,7 @@ import sys
 import json
 import datetime
 from pathlib import Path
+from typing import Optional, Dict, Any, List, Tuple
 import click
 from rich.console import Console
 from rich.panel import Panel
