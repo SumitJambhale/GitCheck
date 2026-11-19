@@ -42,10 +42,6 @@ export GEMINI_API_KEY="your-gemini-api-key"
 # or export OPENAI_API_KEY="your-openai-key"
 # or export ANTHROPIC_API_KEY="your-anthropic-key"
 
-# 3. Configure Supabase (optional; falls back to local cache)
-export SUPABASE_URL="https://your-project.supabase.co"
-export SUPABASE_ANON_KEY="your-supabase-anon-key"
-
 # 4. Install Git Pre-Commit Hook in any repo
 git-check install-hook
 
