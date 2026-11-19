@@ -11,11 +11,6 @@ GitCheck/
 ├── cli/                 # Python CLI harness installed on developer machines
 │   ├── git_check/       # Diff inspection, Socratic interrogation, Supabase sync
 │   └── tests/           # Unit test suite
-├── web/                 # React Single Page App (deployed to Vercel)
-│   ├── src/             # Commit review description, previous context timeline
-│   └── vercel.json      # Vercel deployment configuration
-└── supabase/
-    └── schema.sql       # PostgreSQL schema with RLS and indexing
 ```
 
 ---
@@ -34,7 +29,6 @@ GitCheck/
   - **Needs Review (< 80% or Trap Caught)**: Highlights the counterfactual false premise that was accepted, displays a concise **50–100 word explanation** of why the changes exist, and prompts the developer to confirm agreement (`[y/N]`).
 - **Privacy Guaranteed**: Quiz scores and individual comprehension grades are kept strictly confidential. Only the architectural summary and author agreement are recorded.
 - **Configurable LLM Provider**: Supports Google Gemini (`gemini-1.5-flash`), OpenAI (`gpt-4o-mini`), Anthropic Claude (`claude-3-haiku`), or intelligent AST-driven local heuristics.
-- **PostgreSQL / Supabase Integration**: Automatically caches findings and past context to prevent repeated rework.
 
 ### Installation & Usage
 
